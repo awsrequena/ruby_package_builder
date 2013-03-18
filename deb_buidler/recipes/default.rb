@@ -46,7 +46,7 @@ Dir.mktmpdir do |target_dir|
   end
 
   remote_file "#{target_dir}/#{node[:rubybuild][:basename]}.tar.bz2" do
-    source "http://ftp.ruby-lang.org/pub/ruby/1.9/#{node[:rubybuild][:basename]}.tar.bz2"
+    source "http://ftp.ruby-lang.org/pub/ruby/#{node[:rubybuild][:basename].match(/.\../)[0]}/#{node[:rubybuild][:basename]}.tar.bz2"
     owner node[:rubybuild][:user]
   end
 
