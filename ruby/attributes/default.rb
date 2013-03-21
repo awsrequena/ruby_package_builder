@@ -19,10 +19,10 @@ default[:package_builder][:ruby][:configure] = "--prefix='/usr/local' --included
 # deb package specific
 default[:package_builder][:ruby][:deb][:pkgrelease] = '3'
 default[:package_builder][:ruby][:deb][:arch] = node[:kernel][:machine] == 'x86_64' ? 'amd64' : 'i386'
-default[:package_builder][:ruby][:deb][:deb] = "ruby1.9_#{node[:package_builder][:version]}-#{node[:package_builder][:patch]}.#{node[:package_builder][:pkgrelease]}_#{node[:package_builder][:arch]}.deb"
+default[:package_builder][:ruby][:deb][:deb] = "ruby1.9_#{node[:package_builder][:ruby][:version]}-#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:pkgrelease]}_#{node[:package_builder][:arch]}.deb"
 default[:package_builder][:ruby][:deb][:cleanup] = false
 # rpm package specific
 default[:package_builder][:ruby][:rpm][:pkgrelease] = '1'
 default[:package_builder][:ruby][:rpm][:arch] = node[:kernel][:machine] == 'x86_64' ? 'amd64' : 'i386'
-default[:package_builder][:ruby][:rpm][:package_name] = "ruby1.9_#{node[:package_builder][:ruby][:version]}-#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:rpm][:pkgrelease]}_#{node[:package_builder][:rpm][:arch]}.rpm"
+default[:package_builder][:ruby][:rpm][:package_name] = "ruby1.9_#{node[:package_builder][:ruby][:version]}-#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:ruby][:rpm][:pkgrelease]}_#{node[:package_builder][:deb][:rpm][:arch]}.rpm"
 default[:package_builder][:ruby][:rpm][:cleanup] = false
