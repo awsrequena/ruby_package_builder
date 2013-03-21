@@ -1,6 +1,6 @@
 case node[:platfom]
 when 'ubuntu','debian'
-  include_recipe 'deb'
+  include_recipe 'ruby::deb'
 when 'centos','redhat','fedora','amazon'
-  include_recipe 'rpm'
+  include_recipe 'ruby::rpm'
 end
