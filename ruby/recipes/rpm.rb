@@ -84,15 +84,15 @@ Dir.mktmpdir do |target_dir|
   perform "./configure #{node[:package_builder][:ruby][:configure]} > #{build_dir}/../configure_#{current_time} 2>&1",
           :cwd => build_dir
 
-  perform "make -j #{node["cpu"]["total"]} > #{build_dir}/../make_#{current_time} 2>&1", :cwd => build_dir
+  perform "make -j #{node["cpu"]["total"] - 1} > #{build_dir}/../make_#{current_time} 2>&1", :cwd => build_dir
 
   Chef::Log.info 'Installing package'
   # this must run as root
-  perform "make -j #{node["cpu"]["total"]} install DESTDIR='#{build_dest}' > #{build_dir}/../install_#{current_time} 2>&1", :cwd => build_dir, :user => "root"
+  perform "make -j #{node["cpu"]["total"] - 1} install DESTDIR='#{build_dest}' > #{build_dir}/../install_#{current_time} 2>&1", :cwd => build_dir, :user => "root"
 
   Chef::Log.info "Running package's test suite"
   # this must NOT run as root
-  #perform "make -j #{node["cpu"]["total"]} check > #{build_dir}/../test_#{current_time} 2>&1", :cwd => build_dir
+  perform "make -j #{node["cpu"]["total"] - 1 } check > #{build_dir}/../test_#{current_time} 2>&1", :cwd => build_dir
 
   Chef::Log.info 'Creating rpm package'
   pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
