@@ -67,8 +67,8 @@ Dir.mktmpdir do |target_dir|
     action :create
   end
 
-  remote_file "#{target_dir}/#{node[:package_builder][:rpm][:basename]}.tar.bz2" do
-    Chef::Log.info "Downloading sources from #{node[:package_builder][:rpm][:package_url]}"
+  remote_file "#{target_dir}/#{node[:package_builder][:ruby][:basename]}.tar.bz2" do
+    Chef::Log.info "Downloading sources from #{node[:package_builder][:ruby][:package_url]}"
     source node[:package_builder][:ruby][:package_url]
     owner node[:package_builder][:user]
   end
