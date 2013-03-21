@@ -96,7 +96,7 @@ Dir.mktmpdir do |target_dir|
 
   Chef::Log.info 'Creating rpm package'
   pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
-  FileUtils.mkdir_p pkg_dir
+  FileUtils.rm_rf pkg_dir and FileUtils.mkdir_p pkg_dir
 
   perform "fpm -s dir \
             -t rpm \
