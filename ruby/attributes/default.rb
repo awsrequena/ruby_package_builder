@@ -14,7 +14,7 @@ default[:package_builder][:ruby][:version] = '1.9.3'
 default[:package_builder][:ruby][:patch_level] = 'p392'
 default[:package_builder][:ruby][:base_url] = "http://ftp.ruby-lang.org/pub/ruby"
 default[:package_builder][:ruby][:basename] = "ruby-#{node[:package_builder][:ruby][:version]}-#{node[:package_builder][:ruby][:patch_level]}"
-default[:package_builder][:ruby][:package_url] = "#{node[:package_builder][:ruby][:base_url]}/#{node[:package_builder][:ruby][:version].match(/.\../)[0]}/#{node[:package_builder][:ruby][:basename]}.tar.bz2"
+default[:package_builder][:ruby][:sources_url] = "#{node[:package_builder][:ruby][:base_url]}/#{node[:package_builder][:ruby][:version].match(/.\../)[0]}/#{node[:package_builder][:ruby][:basename]}.tar.bz2"
 default[:package_builder][:ruby][:configure] = "--prefix='/usr/local' --includedir='/usr/local/include' --libdir='/usr/local/lib' --enable-shared --disable-rpath --disable-install-doc"
 # deb package specific
 default[:package_builder][:ruby][:deb][:pkgrelease] = '3'
