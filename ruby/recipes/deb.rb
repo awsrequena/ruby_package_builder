@@ -8,7 +8,7 @@ package 'libreadline-dev'
 package 'libyaml-dev'
 
 def manage_test_user(action, cwd = nil)
-  user node[:rubybuild][:user] do
+  user node[:package_builder][:user] do
     comment 'User for running build tests'
     home cwd unless cwd.nil? || cwd.empty?
     shell '/bin/bash'
@@ -22,7 +22,7 @@ end
 def perform(cmd, options = {})
   options = {
     :cwd => '/tmp',
-    :user => node[:rubybuild][:user]
+    :user => node[:package_builder][:user]
   }.update(options)
 
   execute cmd do
@@ -41,22 +41,23 @@ Dir.mktmpdir do |target_dir|
   manage_test_user(:create, target_dir)
 
   directory target_dir do
-    owner node[:rubybuild][:user]
+    owner node[:package_builder][:user]
     action :create
   end
 
-  remote_file "#{target_dir}/#{node[:rubybuild][:basename]}.tar.bz2" do
-    source "http://ftp.ruby-lang.org/pub/ruby/#{node[:rubybuild][:basename].match(/.\../)[0]}/#{node[:rubybuild][:basename]}.tar.bz2"
-    owner node[:rubybuild][:user]
+  remote_file "#{target_dir}/#{node[:package_builder][:ruby][:basename]}.tar.bz2" do
+    Chef::Log.info "Downloading sources from #{node[:ruby_package_builder][:rpm][:package_url]}"
+    source node[:ruby_package_builder][:ruby][:package_url]
+    owner node[:package_builder][:user]
   end
 
   # if this runs as root, we're going to have problems during testing
-  perform "tar xvfj #{node[:rubybuild][:basename]}.tar.bz2", :cwd => target_dir
+  perform "tar xvfj #{node[:package_builder][:ruby][:basename]}.tar.bz2", :cwd => target_dir
 
-  build_dir = "#{target_dir}/#{node[:rubybuild][:basename]}"
+  build_dir = "#{target_dir}/#{node[:package_builder][:ruby][:basename]}"
 
   Chef::Log.info 'Buiding package'
-  perform "./configure --prefix=#{node[:rubybuild][:prefix]} #{node[:rubybuild][:configure]} > #{build_dir}/../configure_#{current_time} 2>&1", :cwd => build_dir
+  perform "./configure #{node[:package_builder][:configure]} > #{build_dir}/../configure_#{current_time} 2>&1", :cwd => build_dir
   perform "make -j #{node["cpu"]["total"]} > #{build_dir}/../make_#{current_time} 2>&1", :cwd => build_dir
 
   Chef::Log.info 'Installing package'
@@ -68,9 +69,9 @@ Dir.mktmpdir do |target_dir|
   perform "make -j #{node["cpu"]["total"]} check > #{build_dir}/../test_#{current_time} 2>&1", :cwd => build_dir
 
   Chef::Log.info 'Creating deb package'
-  perform "checkinstall -y -D --pkgname=ruby1.9 --pkgversion=#{node[:rubybuild][:version]} \
-                        --pkgrelease=#{node[:rubybuild][:patch]}.#{node[:rubybuild][:pkgrelease]} \
-                        --maintainer=#{node[:rubybuild][:maintainer]} --pkggroup=ruby --pkglicense='Ruby License' \
+  perform "checkinstall -y -D --pkgname=ruby1.9 --pkgversion=#{node[:package_builder][:ruby][:version]} \
+                        --pkgrelease=#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:pkgrelease]} \
+                        --maintainer=#{node[:package_builder][:maintainer]} --pkggroup=ruby --pkglicense='Ruby License' \
                         --include=./.installed.list \
                         --install=no \
                         make install",
@@ -78,13 +79,13 @@ Dir.mktmpdir do |target_dir|
                         :user => 'root'
 
   Chef::Log.info 'Coping deb package into package dir'
-  pkg_dir = "/tmp/rubybuild/#{node[:platform]}/#{node[:platform_version]}"
+  pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
   FileUtils.mkdir_p pkg_dir
   deb_file = Dir.glob("#{build_dir}/*/*").select{|e| e =~ /.*deb$/}
   Chef::Log.info "Copying  #{deb_file} into #{pkg_dir}"
   FileUtils.mv deb_file, pkg_dir
 
-  if node[:rubybuild][:s3][:upload]
+  if node[:package_builder][:s3][:upload]
     # TODO: use aws_sdk for this
     Chef::Log.info 'Uploading package into S3 bucket'
     package 's3cmd'
@@ -93,7 +94,7 @@ Dir.mktmpdir do |target_dir|
       source 's3cfg.erb'
     end
 
-    execute "s3cmd -c /tmp/.s3cfg put --acl-public --guess-mime-type #{node[:rubybuild][:deb]} s3://#{node[:rubybuild][:s3][:bucket]}/#{node[:rubybuild][:s3][:path]}/" do
+    execute "s3cmd -c /tmp/.s3cfg put --acl-public --guess-mime-type #{node[:package_builder][:ruby][:package_name]} s3://#{node[:package_builder][:s3][:bucket]}/#{node[:package_builder][:s3][:path]}/" do
       cwd build_dir
     end
 
@@ -107,9 +108,9 @@ Dir.mktmpdir do |target_dir|
     recursive true
     action :delete
     only_if do
-      node[:rubybuild][:cleanup]
+      node[:package_builder][:ruby][:deb][:cleanup]
     end
   end
 end
 
-manage_test_user(:remove) if node[:rubybuild][:cleanup]
+manage_test_user(:remove) if node[:package_builder][:ruby][:deb][:cleanup]
