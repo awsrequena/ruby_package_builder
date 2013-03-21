@@ -46,8 +46,8 @@ Dir.mktmpdir do |target_dir|
   end
 
   remote_file "#{target_dir}/#{node[:package_builder][:ruby][:basename]}.tar.bz2" do
-    Chef::Log.info "Downloading sources from #{node[:ruby_package_builder][:ruby][:sources_url]}"
-    source node[:ruby_package_builder][:ruby][:sources_url]
+    Chef::Log.info "Downloading sources from #{node[:package_builder][:ruby][:sources_url]}"
+    source node[:package_builder][:ruby][:sources_url]
     owner node[:package_builder][:user]
   end
 
