@@ -90,7 +90,7 @@ Dir.mktmpdir do |target_dir|
             --description 'Node.js is a platform built on Chrome's JavaScript runtime for easily building fast, scalable network applications. Node.js uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.' \
             --provides 'node' \
             --provides 'npm' \
-            --url '#{node[:package_builder][:nodejs][:base_url].}' \
+            --url '#{node[:package_builder][:nodejs][:base_url]}' \
             --package '#{node[:package_builder][:nodejs][:rpm][:package_name]}' \
             usr"
           ,
