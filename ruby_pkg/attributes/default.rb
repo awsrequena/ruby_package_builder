@@ -1,4 +1,3 @@
-default[:package_builder] = {}
 # global information
 default[:package_builder][:user] = 'pkgbuildera'
 default[:package_builder][:maintainer] = 'Amazon.com, Inc. <http://aws.amazon.com>'
@@ -7,8 +6,8 @@ default[:package_builder][:s3] = {}
 default[:package_builder][:s3][:upload] = false
 default[:package_builder][:s3][:bucket] = ''
 default[:package_builder][:s3][:path] = "packages/#{node[:platform]}/#{node[:platform_version]}"
-default[:package_builder][:ruby][:rpm][:s3][:aws_access_key] = ""
-default[:package_builder][:ruby][:rpm][:s3][:aws_secret_access_key] = ""
+default[:package_builder][:ruby][:s3][:aws_access_key] = ""
+default[:package_builder][:ruby][:s3][:aws_secret_access_key] = ""
 # global ruby packaging
 default[:package_builder][:ruby][:version] = '1.9.3'
 default[:package_builder][:ruby][:patch_level] = 'p392'
