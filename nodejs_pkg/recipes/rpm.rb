@@ -1,6 +1,5 @@
 # compile against latest libraries
-execute 'apt-get update -qy'
-execute 'apt-get upgrade -qy'
+execute 'yum update -qy'
 
 [
  'glibc-devel',
@@ -53,14 +52,14 @@ Dir.mktmpdir do |target_dir|
     action :create
   end
 
-  remote_file "#{target_dir}/#{node[:package_builder][:nodejs][:basename]}.tar.bz2" do
+  remote_file "#{target_dir}/#{node[:package_builder][:nodejs][:basename]}.tar.gz" do
     Chef::Log.info "Downloading sources from #{node[:package_builder][:nodejs][:sources_url]}"
     source node[:package_builder][:nodejs][:sources_url]
     owner node[:package_builder][:user]
   end
 
   # if this runs as root, we're going to have problems during testing
-  perform "tar xvfj #{node[:package_builder][:nodejs][:basename]}.tar.bz2", :cwd => target_dir
+  perform "tar xvzf #{node[:package_builder][:nodejs][:basename]}.tar.gz", :cwd => target_dir
 
   build_dir = "#{target_dir}/#{node[:package_builder][:nodejs][:basename]}"
   build_dest = "#{build_dir}/../make_install_dir"
