@@ -14,7 +14,7 @@ default[:package_builder][:nodejs][:version] = "0.8.#{node[:package_builder][:no
 default[:package_builder][:nodejs][:base_url] = 'http://nodejs.org/dist'
 default[:package_builder][:nodejs][:basename] = "nodejs-#{node[:package_builder][:nodejs][:version]}"
 default[:package_builder][:nodejs][:sources_url] = "#{node[:package_builder][:nodejs][:base_url]}/v#{node[:package_builder][:nodejs][:version]}/node-v#{node[:package_builder][:nodejs][:version]}.tar.gz"
-default[:package_builder][:nodejs][:configure] = "--prefix='/usr/local' --includedir='/usr/local/include' --libdir='/usr/local/lib'"
+default[:package_builder][:nodejs][:configure] = "--prefix='/usr/local'"
 # deb package specific
 default[:package_builder][:nodejs][:deb][:pkgrelease] = '3'
 default[:package_builder][:nodejs][:deb][:arch] = node[:kernel][:machine] == 'x86_64' ? 'amd64' : 'i386'

@@ -61,7 +61,7 @@ Dir.mktmpdir do |target_dir|
   # if this runs as root, we're going to have problems during testing
   perform "tar xvzf #{node[:package_builder][:nodejs][:basename]}.tar.gz", :cwd => target_dir
 
-  build_dir = "#{target_dir}/#{node[:package_builder][:nodejs][:basename]}"
+  build_dir = "#{target_dir}/node-v#{node[:package_builder][:nodejs][:version]}"
   build_dest = "#{build_dir}/../make_install_dir"
   directory build_dest
 
