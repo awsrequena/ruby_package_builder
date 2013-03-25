@@ -98,16 +98,22 @@ Dir.mktmpdir do |target_dir|
   pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
   FileUtils.rm_rf pkg_dir and FileUtils.mkdir_p pkg_dir
 
-  perform "fpm -s dir \
+  Chef::Log.info 'Creating rpm package'
+  File.open("#{target_dir}/../execute_ldconfig.sh", 'w') do |f|
+    f.write "#! /bin/env sh\n ldconfig"
+  end
+
+  perform "/usr/local/bin/fpm -s dir \
             -t rpm \
-            -n ruby#{node[:package_builder][:ruby][:version].match(/(.)\.(.)/)[1,2].join} \
-            -v #{node[:package_builder][:ruby][:version]}#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:ruby][:rpm][:pkgrelease]} \
-            --license 'SBSD \(http://www.ruby-lang.org/en/about/license.txt\)' \
-            --maintainer '#{node[:package_builder][:maintainer]}' \
-            --description 'A dynamic, open source programming language with a focus on simplicity and productivity. It has an elegant syntax that is natural to read and easy to write.' \
-            --url 'http://www.ruby-lang.org' \
-            -C #{build_dest} \
-            -p #{pkg_dir}/#{node[:package_builder][:ruby][:rpm][:package_name]} \
+            --after-install \"#{target_dir}/../execute_ldconfig.sh\" \
+            -n \"ruby#{node[:package_builder][:ruby][:version].match(/(.)\.(.)/)[1,2].join}\" \
+            -v \"#{node[:package_builder][:ruby][:version]}#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:ruby][:rpm][:pkgrelease]}\" \
+            --license \"SBSD \(http://www.ruby-lang.org/en/about/license.txt\)\" \
+            --maintainer \"#{node[:package_builder][:maintainer]}\" \
+            --description \"A dynamic, open source programming language with a focus on simplicity and productivity. It has an elegant syntax that is natural to read and easy to write.\" \
+            --url \"http://www.ruby-lang.org\" \
+            -C \"#{build_dest}\" \
+            -p \"#{pkg_dir}/#{node[:package_builder][:ruby][:rpm][:package_name]}\" \
             usr",
 	        :cwd => build_dir,
           :user => "root"
