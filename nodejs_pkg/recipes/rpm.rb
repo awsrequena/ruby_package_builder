@@ -77,23 +77,28 @@ Dir.mktmpdir do |target_dir|
   pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
   FileUtils.rm_rf pkg_dir and FileUtils.mkdir_p pkg_dir
 
+  Chef::Log.info 'Creating rpm package'
+  File.open("#{target_dir}/../execute_ldconfig.sh", 'w') do |f|
+    f.write "#! /bin/env sh\n ldconfig"
+  end
+
   perform "/usr/local/bin/fpm --verbose \
-            -C builddir \
+            -C \"#{build_dest}\" \
             -s dir \
             -t rpm \
-            --after-install 'execute_ldconfig.sh' \
+            --after-install \"#{target_dir}/../execute_ldconfig.sh\" \
             --name nodejs \
-            --version #{node[:package_builder][:nodejs][:version]} \
-            --license 'MIT license, and bundles other liberally licensed OSS components. https://raw.github.com/joyent/node/v#{node[:package_builder][:nodejs][:version]}/LICENSE' \
-            --maintainer #{node[:package_builder][:maintainer]} \
-            --description 'Node.js is a platform built on Chrome's JavaScript runtime for easily building fast, scalable network applications. Node.js uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.' \
+            --version \"#{node[:package_builder][:nodejs][:version]}\" \
+            --license \"MIT license, and bundles other liberally licensed OSS components. https://raw.github.com/joyent/node/v#{node[:package_builder][:nodejs][:version]}/LICENSE\" \
+            --maintainer \"#{node[:package_builder][:maintainer]}\" \
+            --description \"Node.js is a platform built on Chrome's JavaScript runtime for easily building fast, scalable network applications. Node.js uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices.\" \
             --provides 'node' \
             --provides 'npm' \
-            --url '#{node[:package_builder][:nodejs][:base_url]}' \
-            --package '#{node[:package_builder][:nodejs][:rpm][:package_name]}' \
+            --url \"#{node[:package_builder][:nodejs][:base_url]}\" \
+            --package \"#{node[:package_builder][:nodejs][:rpm][:package_name]}\" \
             usr",
 	        :cwd => build_dir,
-          :user => "root"
+          :user => 'root'
 
   if node[:package_builder][:s3][:upload]
     # TODO: use aws_sdk for this
