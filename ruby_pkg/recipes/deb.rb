@@ -2,10 +2,18 @@
 execute 'apt-get update -qy'
 execute 'apt-get upgrade -qy'
 
-package "checkinstall"
-package "libffi-dev"
-package 'libreadline-dev'
-package 'libyaml-dev'
+[
+  'libffi-dev',
+  'libreadline-dev',
+  'libyaml-dev'
+].each do |pkg|
+  package pkg
+end
+
+gem_package 'fpm' do
+  Chef::Log.info "Installing fpm - the Effing package manager."
+  options "--no-ri --no-rdoc"
+end
 
 def manage_test_user(action, cwd = nil)
   user node[:package_builder][:user] do
@@ -34,7 +42,6 @@ def perform(cmd, options = {})
   end
 end
 
-
 # the whole build happens in a temp directory to avoid collitions with other builds
 Dir.mktmpdir do |target_dir|
 
@@ -55,35 +62,46 @@ Dir.mktmpdir do |target_dir|
   perform "tar xvfj #{node[:package_builder][:ruby][:basename]}.tar.bz2", :cwd => target_dir
 
   build_dir = "#{target_dir}/#{node[:package_builder][:ruby][:basename]}"
+  build_dest = "#{build_dir}/../make_install_dir"
+  directory build_dest
 
   Chef::Log.info 'Buiding package'
-  perform "./configure #{node[:package_builder][:configure]} > #{build_dir}/../configure_#{current_time} 2>&1", :cwd => build_dir
+  perform "./configure #{node[:package_builder][:ruby][:configure]} > #{build_dir}/../configure_#{current_time} 2>&1",
+          :cwd => build_dir
+
   perform "make -j #{node["cpu"]["total"] - 1} > #{build_dir}/../make_#{current_time} 2>&1", :cwd => build_dir
 
   Chef::Log.info 'Installing package'
   # this must run as root
-  perform "make -j #{node["cpu"]["total"] - 1} install > #{build_dir}/../install_#{current_time} 2>&1", :cwd => build_dir, :user => "root"
+  perform "make -j #{node["cpu"]["total"] - 1} install DESTDIR='#{build_dest}' > #{build_dir}/../install_#{current_time} 2>&1", :cwd => build_dir, :user => "root"
 
   Chef::Log.info "Running package's test suite"
   # this must NOT run as root
-  perform "make -j #{node["cpu"]["total"] - 1} check > #{build_dir}/../test_#{current_time} 2>&1", :cwd => build_dir
+  perform "make -j #{node["cpu"]["total"] - 1 } check > #{build_dir}/../test_#{current_time} 2>&1", :cwd => build_dir
 
-  Chef::Log.info 'Creating deb package'
-  perform "checkinstall -y -D --pkgname=ruby1.9 --pkgversion=#{node[:package_builder][:ruby][:version]} \
-                        --pkgrelease=#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:ruby][:deb][:pkgrelease]} \
-                        --maintainer=#{node[:package_builder][:maintainer]} --pkggroup=ruby --pkglicense='Ruby License' \
-                        --include=./.installed.list \
-                        --install=no \
-                        make install",
-                        :cwd => build_dir,
-                        :user => 'root'
-
-  Chef::Log.info 'Coping deb package into package dir'
+  Chef::Log.info 'Creating rpm package'
   pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
-  FileUtils.mkdir_p pkg_dir
-  deb_file = Dir.glob("#{build_dir}/*/*").select{|e| e =~ /.*deb$/}
-  Chef::Log.info "Copying  #{deb_file} into #{pkg_dir}"
-  FileUtils.mv deb_file, pkg_dir
+  FileUtils.rm_rf pkg_dir and FileUtils.mkdir_p pkg_dir
+
+  Chef::Log.info 'Creating rpm package'
+  File.open("#{target_dir}/../execute_ldconfig.sh", 'w') do |f|
+    f.write "#! /bin/env sh\n ldconfig"
+  end
+
+  perform "/usr/local/bin/fpm -s dir \
+            -t deb \
+            --after-install \"#{target_dir}/../execute_ldconfig.sh\" \
+            -n \"ruby#{node[:package_builder][:ruby][:version].match(/(.)\.(.)/)[1,2].join}\" \
+            -v \"#{node[:package_builder][:ruby][:version]}#{node[:package_builder][:ruby][:patch_level]}.#{node[:package_builder][:ruby][:deb][:pkgrelease]}\" \
+            --license \"SBSD \(http://www.ruby-lang.org/en/about/license.txt\)\" \
+            --maintainer \"#{node[:package_builder][:maintainer]}\" \
+            --description \"A dynamic, open source programming language with a focus on simplicity and productivity. It has an elegant syntax that is natural to read and easy to write.\" \
+            --url \"http://www.ruby-lang.org\" \
+            -C \"#{build_dest}\" \
+            -p \"#{pkg_dir}/#{node[:package_builder][:ruby][:deb][:package_name]}\" \
+            usr",
+	        :cwd => build_dir,
+          :user => "root"
 
   if node[:package_builder][:s3][:upload]
     # TODO: use aws_sdk for this
@@ -94,7 +112,11 @@ Dir.mktmpdir do |target_dir|
       source 's3cfg.erb'
     end
 
-    execute "s3cmd -c /tmp/.s3cfg put --acl-public --guess-mime-type #{node[:package_builder][:ruby][:deb][:package_name]} s3://#{node[:package_builder][:s3][:bucket]}/#{node[:package_builder][:s3][:path]}/" do
+    execute "upload package" do
+	    command "s3cmd -c /tmp/.s3cfg put \
+                 --acl-public \
+                 --guess-mime-type #{node[:package_builder][:ruby][:rpm][:package_name]} \
+                 s3://#{node[:package_builder][:s3][:bucket]}/#{node[:package_builder][:s3][:path]}/"
       cwd build_dir
     end
 
