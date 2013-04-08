@@ -1,14 +1,6 @@
 # compile against latest libraries
-execute 'yum update -qy'
-
-[
- 'glibc-devel',
- 'gcc',
- 'openssl-devel',
- 'make',
-].each do |pkg|
-  package pkg
-end
+execute 'apt-get update -qy'
+execute 'apt-get upgrade -qy'
 
 gem_package 'fpm' do
   Chef::Log.info "Installing fpm - the Effing package managers, this is the solution."
@@ -71,13 +63,13 @@ Dir.mktmpdir do |target_dir|
 
   Chef::Log.info 'Installing package'
   # this must run as root
-  perform "DESTDIR='#{build_dest}' make -j #{node["cpu"]["total"] - 1} all install > #{build_dir}/../install_#{current_time} 2>&1", :cwd => build_dir, :user => "root"
+  perform "DESTDIR='#{build_dest}' make -j #{node["cpu"]["total"] - 1} all install > #{build_dir}/../install_#{current_time} 2>&1", :cwd => build_dir, :user => 'root'
 
   Chef::Log.info 'Creating deb package'
   pkg_dir = "/tmp/package_builder/#{node[:platform]}/#{node[:platform_version]}"
   FileUtils.rm_rf pkg_dir and FileUtils.mkdir_p pkg_dir
 
-  Chef::Log.info 'Creating rpm package'
+  Chef::Log.info 'Creating deb package'
   File.open("#{target_dir}/../execute_ldconfig.sh", 'w') do |f|
     f.write "#! /bin/env sh\n ldconfig"
   end
@@ -109,7 +101,7 @@ Dir.mktmpdir do |target_dir|
       source 's3cfg.erb'
     end
 
-    execute "upload package" do
+    execute 'upload package' do
 	    command "s3cmd -c /tmp/.s3cfg put \
                  --acl-public \
                  --guess-mime-type #{node[:package_builder][:nodejs][:deb][:package_name]} \
