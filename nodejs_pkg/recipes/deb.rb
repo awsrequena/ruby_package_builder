@@ -87,7 +87,7 @@ Dir.mktmpdir do |target_dir|
             --provides 'node' \
             --provides 'npm' \
             --url \"#{node[:package_builder][:nodejs][:base_url]}\" \
-            --package \"#{node[:package_builder][:nodejs][:deb][:package_name]}\" \
+            --package \"/#{pkg_dir}/#{node[:package_builder][:nodejs][:deb][:package_name]}\" \
             usr",
 	        :cwd => build_dir,
           :user => 'root'
