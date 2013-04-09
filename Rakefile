@@ -1,7 +1,7 @@
 require 'bundler/setup'
 Bundler.require
 STDOUT.sync = true
-CREDENTIALS_FILE = File.dirname(__FILE__) + '/../../upload-assets-credentials.yml'
+CREDENTIALS_FILE = File.dirname(__FILE__) + '/../upload-assets-credentials.yml'
 PKG_BUILDER_BUCKET = 'opsworks-package-builder-tools'
 
 # we need GNU tar to avoid warning when extracting the content on linux systems
@@ -35,7 +35,7 @@ task :upload_package_builder_cookbooks do
          --exclude 'pkg' \
          --exclude 'Rakefile' \
          --exclude 'config' \
-         --exclude 'Gemfile' \
+         --exclude 'Gemfile*' \
          --exclude 'vendor'"
    )
 
